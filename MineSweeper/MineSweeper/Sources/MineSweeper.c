@@ -7,6 +7,8 @@
 #define LINES_OF_HARD 20
 #define NUM_OF_ALL_CELLS ROWS_OF_HARD*LINES_OF_HARD
 
+int turn;
+int isFinished = 0;
 enum Level {easy, normal, hard};
 typedef struct {
 	int isActive_;
@@ -14,26 +16,46 @@ typedef struct {
 	int state_;
 	int info_;
 } Cell;
+Cell cells[ROWS_OF_HARD][LINES_OF_HARD];
+
+void SelectLevel(Level *pLevel);
+void SetField(Level level);
 int RowsOf(Level level);
 int LinesOf(Level level);
-void SelectLevel(Level *pLevel);
-void SetField(Cell *pCells, Level *pLevel);
-void Display();
+void Draw();
+void Input();
 
 int main(){
 
 	Level level;
 	Level *pLevel = &level;
-	int turn;
-
-	Cell cells[ROWS_OF_HARD][LINES_OF_HARD];
 
 	SelectLevel(pLevel);
-	SetField(cells, pLevel);
-	Display();
-
-
+	SetField(level);
+	while(!isFinished){
+		Draw();
+		Input();
+	}
 	return 0;
+}
+
+
+
+void SelectLevel(Level *pLevel){
+	do{
+		printf("難易度を選んでください(初級：1 中級：2 上級：3)：");
+		scanf("%d", pLevel);
+	}while(*pLevel < 1 || *pLevel > 3);
+}
+
+void SetField(Level level){
+	int x, y;
+	for(y = 0; y < LINES_OF_HARD; y++){
+		for(x = 0; x < ROWS_OF_HARD; x++){
+			cells[y][x].isActive_ = (x < RowsOf(level) && y < LinesOf(level)) ? 1 : 0;
+		}
+		printf("\n");
+	}
 }
 
 int RowsOf(Level level){
@@ -51,23 +73,6 @@ int LinesOf(Level level){
 	}
 }
 
-void SelectLevel(Level *pLevel){
-	do{
-		printf("難易度を選んでください(初級：1 中級：2 上級：3)：");
-		scanf("%d", pLevel);
-	}while(*pLevel < 1 || *pLevel > 3);
-}
-
-void SetField(Cell *pCells, Level *pLevel){
-	//Cell *ip = pCells;
-	int i;
-	for(i = 0; i < NUM_OF_ALL_CELLS; i++){
-		switch((pCells + i)->info_){
-			case 
-		}
-	}
-}
-
-void Display(){
+void Draw(){
 
 }
