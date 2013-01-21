@@ -1,4 +1,6 @@
 ﻿#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
 #define ROWS_OF_EASY 9
 #define LINES_OF_EASY 9
 #define NUM_OF_MINES_AT_EASY 10
@@ -24,13 +26,15 @@ Cell cells[ROWS_OF_HARD][LINES_OF_HARD];
 void SelectLevel();
 void SetField();
 void InitializeField();
+int Random(int min,int max);
 int ActiveRows();
 int ActiveLines();
+int NumOfMines();
 void Draw();
 void Input();
 
 int main(){
-
+	srand((unsigned int)time(NULL));
 	SelectLevel();
 	SetField();
 	while(!isFinished){
@@ -49,7 +53,8 @@ void SelectLevel(){
 
 void SetField(){
 	InitializeField();
-
+	int x, y;
+	/////////////////////////////
 }
 
 void InitializeField(){
@@ -60,6 +65,10 @@ void InitializeField(){
 			cells[y][x].state_ = close;
 		}
 	}
+}
+
+int Random(int min,int max){
+	return min + rand() % (max - min + 1);
 }
 
 int ActiveRows(){
@@ -74,6 +83,13 @@ int ActiveLines(){
 	case easy : return LINES_OF_EASY;
 	case normal : return LINES_OF_NORMAL;
 	case hard : return LINES_OF_HARD;
+	}
+}
+int NumOfMines(){
+	switch(level){
+	case easy : return NUM_OF_MINES_AT_EASY;
+	case normal : return NUM_OF_MINES_AT_NORMAL;
+	case hard : return NUM_OF_MINES_AT_HARD;
 	}
 }
 
