@@ -1,37 +1,38 @@
-#include<stdio.h>
+Ôªø#include<stdio.h>
 #define ROWS_OF_EASY 9
 #define LINES_OF_EASY 9
-#define ROWS_OF_NORMAL 15
-#define LINES_OF_NORMAL 15
-#define ROWS_OF_HARD 15
-#define LINES_OF_HARD 20
-#define NUM_OF_ALL_CELLS ROWS_OF_HARD*LINES_OF_HARD
+#define NUM_OF_MINES_AT_EASY 10
+#define ROWS_OF_NORMAL 16
+#define LINES_OF_NORMAL 16
+#define NUM_OF_MINES_AT_NORMAL 40
+#define ROWS_OF_HARD 30
+#define LINES_OF_HARD 16
+#define NUM_OF_MINES_AT_HARD 99
+
+enum Level {easy, normal, hard};
+enum State {close, flag, question, open};
+typedef struct {
+	int isMine_;
+	State state_;
+} Cell;
 
 int turn;
 int isFinished = 0;
-enum Level {easy, normal, hard};
-typedef struct {
-	int isActive_;
-	int isMine_;
-	int state_;
-	int info_;
-} Cell;
+Level level;
 Cell cells[ROWS_OF_HARD][LINES_OF_HARD];
 
-void SelectLevel(Level *pLevel);
-void SetField(Level level);
-int RowsOf(Level level);
-int LinesOf(Level level);
+void SelectLevel();
+void SetField();
+void InitializeField();
+int ActiveRows();
+int ActiveLines();
 void Draw();
 void Input();
 
 int main(){
 
-	Level level;
-	Level *pLevel = &level;
-
-	SelectLevel(pLevel);
-	SetField(level);
+	SelectLevel();
+	SetField();
 	while(!isFinished){
 		Draw();
 		Input();
@@ -39,33 +40,36 @@ int main(){
 	return 0;
 }
 
-
-
-void SelectLevel(Level *pLevel){
+void SelectLevel(){
 	do{
-		printf("ìÔà’ìxÇëIÇÒÇ≈Ç≠ÇæÇ≥Ç¢(èâãâÅF1 íÜãâÅF2 è„ãâÅF3)ÅF");
-		scanf("%d", pLevel);
-	}while(*pLevel < 1 || *pLevel > 3);
+		printf("Èõ£ÊòìÂ∫¶„ÇíÈÅ∏„Çì„Åß„Åè„Å†„Åï„ÅÑ(ÂàùÁ¥öÔºö1 ‰∏≠Á¥öÔºö2 ‰∏äÁ¥öÔºö3)Ôºö");
+		scanf("%d", &level);
+	}while(level < 1 || level > 3);
 }
 
-void SetField(Level level){
+void SetField(){
+	InitializeField();
+
+}
+
+void InitializeField(){
 	int x, y;
 	for(y = 0; y < LINES_OF_HARD; y++){
 		for(x = 0; x < ROWS_OF_HARD; x++){
-			cells[y][x].isActive_ = (x < RowsOf(level) && y < LinesOf(level)) ? 1 : 0;
+			cells[y][x].isMine_ = 0;
+			cells[y][x].state_ = close;
 		}
-		printf("\n");
 	}
 }
 
-int RowsOf(Level level){
+int ActiveRows(){
 	switch(level){
 	case easy : return ROWS_OF_EASY;
 	case normal : return ROWS_OF_NORMAL;
 	case hard : return ROWS_OF_HARD;
 	}
 }
-int LinesOf(Level level){
+int ActiveLines(){
 	switch(level){
 	case easy : return LINES_OF_EASY;
 	case normal : return LINES_OF_NORMAL;
@@ -74,5 +78,10 @@ int LinesOf(Level level){
 }
 
 void Draw(){
+	int x, y;
+	for(y = 0; y < ActiveLines(); y++){
+		for(x = 0; x < ActiveRows(); x++){
 
+		}
+	}
 }
