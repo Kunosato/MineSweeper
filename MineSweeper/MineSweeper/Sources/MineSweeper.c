@@ -28,6 +28,7 @@ int numOfOpendCells = 0;
 Level level;
 Cell cells[NUM_OF_LINES_AT_HARD][NUM_OF_ROWS_AT_HARD];
 
+void DisplayCheck();
 Level SelectLevel();
 void InitializeField();
 void Draw();
@@ -50,6 +51,7 @@ void Win();
 
 int main(){
 	srand((unsigned int)time(NULL));
+	DisplayCheck();
 	level = SelectLevel();
 	InitializeField();
 	while(!isFinished){
@@ -59,11 +61,56 @@ int main(){
 	return 0;
 }
 
+void DisplayCheck(){
+	char commnd;
+	int x, y;
+	for(y = 0; y < RECOMMENDED_BUFFER_LINES; y++){
+		if(y == 0){
+			putchar('_');
+		}else{
+			putchar('|');
+		}
+		for(x = 0; x < RECOMMENDED_BUFFER_ROWS - 3; x++){
+			if(y == 0 || y == RECOMMENDED_BUFFER_LINES - 1){
+				putchar('_');
+			}else{
+				putchar(' ');
+			}
+		}
+		if(y == 0){
+			putchar('_');
+		}else{
+			putchar('|');
+		}
+		putchar('\n');
+	}
+	do{
+		printf("この上に大きい長方形がきれいに表示されていますか？(Yes : y / No : n)：");
+		scanf(" %c", &commnd);
+		if(commnd == 'n'){
+			printf("表示できるバッファサイズを大きく設定して下さい。(推奨サイズ：幅%d、高さ%d)\n", RECOMMENDED_BUFFER_ROWS, RECOMMENDED_BUFFER_LINES);
+			do{
+				printf("変更出来ましたか？(Yes : y / No : n)：");
+				scanf(" %c", &commnd);
+				if(commnd == 'y'){
+					DisplayCheck();
+				}else if(commnd == 'n'){
+					puts("その場合は初級、もしくは中級でのプレイをおすすめします。");
+				}else{
+					puts("入力値が不正です。「y」もしくは「n」を入力して下さい。");
+				}
+			}while(commnd != 'y' && commnd != 'n');
+		}else if(commnd != 'y'){
+			puts("入力値が不正です。「y」もしくは「n」を入力して下さい。");
+		}
+	}while(commnd != 'y' && commnd != 'n');
+}
+
 Level SelectLevel(){
 	int l;
 	do{
 		printf("難易度を選んでください(初級：1 中級：2 上級：3)：");
-		scanf("%d", &l);
+		scanf(" %d", &l);
 		if(l < 1 || l > 3){
 			puts("入力値が不正です。");
 		}
