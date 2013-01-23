@@ -33,12 +33,12 @@ Level SelectLevel();
 void InitializeField();
 void Draw();
 void CleanDisplay();
-int ActiveRows();
-int ActiveLines();
+int GetNumOfRows();
+int GetNumOfLines();
 // 引数のセルに関して表示すべき文字列(正確にはポインタ)を返します。
 char *GetString(Cell cell);
 void Input();
-int NumOfMines();
+int GetNumOfMines();
 // 引数のインデックスを持つセルを開け、値が0の場合、再帰的に周囲も開きます。
 void OpenCellAt(int x, int y);
 void SetField();
@@ -137,18 +137,18 @@ void Draw(){
 	int x, y;
 	CleanDisplay();
 	printf("  |");
-	for(x = 0; x < ActiveRows(); x++){
+	for(x = 0; x < GetNumOfRows(); x++){
 		printf("%3d", x + 1);
 	}
 	putchar('\n');
 	printf("--|");
-	for(x = 0; x < ActiveRows(); x++){
+	for(x = 0; x < GetNumOfRows(); x++){
 		printf("---");
 	}
 	putchar('\n');
-	for(y = 0; y < ActiveLines(); y++){
+	for(y = 0; y < GetNumOfLines(); y++){
 		printf("%2d|", y + 1);
-		for(x = 0; x < ActiveRows(); x++){
+		for(x = 0; x < GetNumOfRows(); x++){
 			printf(" %s", GetString(cells[y][x]));
 		}
 		putchar('\n');
@@ -162,7 +162,7 @@ void CleanDisplay(){
 	}
 }
 
-int ActiveRows(){
+int GetNumOfRows(){
 	switch(level){
 	case easy : return NUM_OF_ROWS_AT_EASY;
 	case normal : return NUM_OF_ROWS_AT_NORMAL;
@@ -170,7 +170,7 @@ int ActiveRows(){
 	}
 }
 
-int ActiveLines(){
+int GetNumOfLines(){
 	switch(level){
 	case easy : return NUM_OF_LINES_AT_EASY;
 	case normal : return NUM_OF_LINES_AT_NORMAL;
@@ -210,7 +210,7 @@ void Input(){
 	char commnd;
 	int inputX, inputY;
 	int isCorrectCommand = 0;
-	printf("地雷：残り%d個\n", NumOfMines() - numOfFlag);
+	printf("地雷：残り%d個\n", GetNumOfMines() - numOfFlag);
 	puts("以下の例のように半角英数を半角スペース(又は改行)で区切って入力してください。");
 	puts("例1）左から3マス目、上から5マス目を開ける場合");
 	puts("入力欄：x 3 5");
@@ -224,7 +224,7 @@ void Input(){
 	do{
 		printf("入力欄：");
 		scanf(" %c %d %d", &commnd, &inputX, &inputY);
-		if(inputX < 1 || inputX > ActiveRows() || inputY < 1 || inputY > ActiveLines()){
+		if(inputX < 1 || inputX > GetNumOfRows() || inputY < 1 || inputY > GetNumOfLines()){
 			puts("対象が範囲外です。");
 		}else if(commnd != 'x' && commnd != 'f' && commnd != 'q' && commnd != 'e'){
 			puts("コマンドが不正です。");
@@ -243,7 +243,7 @@ void Input(){
 		OpenCellAt(inputX - 1, inputY - 1);
 		if(cells[inputY - 1][inputX - 1].isMine_){
 			Lose();
-		}else if(numOfOpendCells == ActiveLines() * ActiveRows() - NumOfMines()){
+		}else if(numOfOpendCells == GetNumOfLines() * GetNumOfRows() - GetNumOfMines()){
 			Win();
 		}
 		break;
@@ -269,7 +269,7 @@ void Input(){
 	}
 }
 
-int NumOfMines(){
+int GetNumOfMines(){
 	switch(level){
 	case easy : return NUM_OF_MINES_AT_EASY;
 	case normal : return NUM_OF_MINES_AT_NORMAL;
@@ -290,22 +290,22 @@ int NumOfMines(){
 //			if(y > 0){
 //				OpenCellAt(x, y - 1);
 //			}
-//			if(x < ActiveRows() - 1 && y > 0){
+//			if(x < GetNumOfRows() - 1 && y > 0){
 //				OpenCellAt(x + 1, y - 1);
 //			}
 //			if(x > 0){
 //				OpenCellAt(x - 1, y);
 //			}
-//			if(x < ActiveRows() - 1){
+//			if(x < GetNumOfRows() - 1){
 //				OpenCellAt(x + 1, y);
 //			}
-//			if(x > 0 && y < ActiveLines() - 1){
+//			if(x > 0 && y < GetNumOfLines() - 1){
 //				OpenCellAt(x - 1, y + 1);
 //			}
-//			if(y < ActiveLines() - 1){
+//			if(y < GetNumOfLines() - 1){
 //				OpenCellAt(x, y + 1);
 //			}
-//			if(x < ActiveRows() - 1 && y < ActiveLines() - 1){
+//			if(x < GetNumOfRows() - 1 && y < GetNumOfLines() - 1){
 //				OpenCellAt(x + 1, y + 1);
 //			}
 //		}
@@ -316,36 +316,36 @@ void OpenCellAt(int x, int y){
 	if(numOfOpendCells++ == 0){
 		SetField();
 	}
-	if(cells[y][x].numOfSurrounding_ == 0){
+	if(cells[y][x].numOfSurrounding_ == 0 && !cells[y][x].isMine_){
 		if(x > 0 && y > 0 && cells[y - 1][x - 1].state_ == close){
 			OpenCellAt(x - 1, y - 1);
 		}
 		if(y > 0 && cells[y - 1][x].state_ == close){
 			OpenCellAt(x, y - 1);
 		}
-		if(x < ActiveRows() - 1 && y > 0 && cells[y - 1][x + 1].state_ == close){
+		if(x < GetNumOfRows() - 1 && y > 0 && cells[y - 1][x + 1].state_ == close){
 			OpenCellAt(x + 1, y - 1);
 		}
 		if(x > 0 && cells[y][x - 1].state_ == close){
 			OpenCellAt(x - 1, y);
 		}
-		if(x < ActiveRows() - 1 && cells[y][x + 1].state_ == close){
+		if(x < GetNumOfRows() - 1 && cells[y][x + 1].state_ == close){
 			OpenCellAt(x + 1, y);
 		}
-		if(x > 0 && y < ActiveLines() - 1 && cells[y + 1][x - 1].state_ == close){
+		if(x > 0 && y < GetNumOfLines() - 1 && cells[y + 1][x - 1].state_ == close){
 			OpenCellAt(x - 1, y + 1);
 		}
-		if(y < ActiveLines() - 1 && cells[y + 1][x].state_ == close){
+		if(y < GetNumOfLines() - 1 && cells[y + 1][x].state_ == close){
 			OpenCellAt(x, y + 1);
 		}
-		if(x < ActiveRows() - 1 && y < ActiveLines() - 1 && cells[y + 1][x + 1].state_ == close){
+		if(x < GetNumOfRows() - 1 && y < GetNumOfLines() - 1 && cells[y + 1][x + 1].state_ == close){
 			OpenCellAt(x + 1, y + 1);
 		}
 	}
 }
 
 void SetField(){
-	SetMines(NumOfMines());
+	SetMines(GetNumOfMines());
 	SetNumOfSurrounding();
 	startTime = time(NULL);
 }
@@ -354,8 +354,8 @@ void SetMines(int numOfMines){
 	if(numOfMines > 0){
 		int x, y;
 		do{
-			x = RandomNext(ActiveRows());
-			y = RandomNext(ActiveLines());
+			x = RandomNext(GetNumOfRows());
+			y = RandomNext(GetNumOfLines());
 		}while(cells[y][x].isMine_ || cells[y][x].state_ == open);
 		cells[y][x].isMine_ = 1;
 		SetMines(numOfMines - 1);
@@ -368,8 +368,8 @@ int RandomNext(int max){
 
 void SetNumOfSurrounding(){
 	int x, y;
-	for(y = 0; y < ActiveLines(); y++){
-		for(x = 0; x < ActiveRows(); x++){
+	for(y = 0; y < GetNumOfLines(); y++){
+		for(x = 0; x < GetNumOfRows(); x++){
 			if(!cells[y][x].isMine_){
 				if(x > 0 && y > 0 && cells[y - 1][x - 1].isMine_){
 					cells[y][x].numOfSurrounding_++;
@@ -377,22 +377,22 @@ void SetNumOfSurrounding(){
 				if(y > 0 && cells[y - 1][x].isMine_){
 					cells[y][x].numOfSurrounding_++;
 				}
-				if(x < ActiveRows() - 1 && y > 0 && cells[y - 1][x + 1].isMine_){
+				if(x < GetNumOfRows() - 1 && y > 0 && cells[y - 1][x + 1].isMine_){
 					cells[y][x].numOfSurrounding_++;
 				}
 				if(x > 0 && cells[y][x - 1].isMine_){
 					cells[y][x].numOfSurrounding_++;
 				}
-				if(x < ActiveRows() - 1 && cells[y][x + 1].isMine_){
+				if(x < GetNumOfRows() - 1 && cells[y][x + 1].isMine_){
 					cells[y][x].numOfSurrounding_++;
 				}
-				if(x > 0 && y < ActiveLines() - 1 && cells[y + 1][x - 1].isMine_){
+				if(x > 0 && y < GetNumOfLines() - 1 && cells[y + 1][x - 1].isMine_){
 					cells[y][x].numOfSurrounding_++;
 				}
-				if(y < ActiveLines() - 1 && cells[y + 1][x].isMine_){
+				if(y < GetNumOfLines() - 1 && cells[y + 1][x].isMine_){
 					cells[y][x].numOfSurrounding_++;
 				}
-				if(x < ActiveRows() - 1 && y < ActiveLines() - 1 && cells[y + 1][x + 1].isMine_){
+				if(x < GetNumOfRows() - 1 && y < GetNumOfLines() - 1 && cells[y + 1][x + 1].isMine_){
 					cells[y][x].numOfSurrounding_++;
 				}
 			}
