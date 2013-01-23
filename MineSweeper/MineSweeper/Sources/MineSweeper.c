@@ -162,6 +162,7 @@ char *GetString(Cell cell){
 void Input(){
 	char commnd;
 	int inputX, inputY;
+	int isCorrectCommand = 0;
 	printf("地雷：残り%d個\n", NumOfMines() - numOfFlag);
 	puts("以下の例のように半角英数を半角スペース(又は改行)で区切って入力してください。");
 	puts("例1）左から3マス目、上から5マス目を開ける場合");
@@ -184,11 +185,12 @@ void Input(){
 			puts("すでに開いています。");
 		}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == flag){
 			puts("旗が立っています。");
+		}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == question){
+			puts("？が付いています。");
+		}else{
+			isCorrectCommand = 1;
 		}
-	}while(inputX < 1 || inputX > ActiveRows() || inputY < 1 || inputY > ActiveLines()
-		|| (commnd != 'x' && commnd != 'f' && commnd != 'q' && commnd != 'e')
-		|| cells[inputY - 1][inputX - 1].state_ == open
-		|| (commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == flag));
+	}while(!isCorrectCommand);
 	switch(commnd){
 	case 'x' :
 		OpenCellAt(inputX - 1, inputY - 1);
@@ -228,37 +230,69 @@ int NumOfMines(){
 	}
 }
 
+//void OpenCellAt(int x, int y){
+//	if(cells[y][x].state_ != open){
+//		cells[y][x].state_ = open;
+//		if(numOfOpendCells++ == 0){
+//			SetField();
+//		}
+//		if(cells[y][x].numOfSurrounding_ == 0){
+//			if(x > 0 && y > 0){
+//				OpenCellAt(x - 1, y - 1);
+//			}
+//			if(y > 0){
+//				OpenCellAt(x, y - 1);
+//			}
+//			if(x < ActiveRows() - 1 && y > 0){
+//				OpenCellAt(x + 1, y - 1);
+//			}
+//			if(x > 0){
+//				OpenCellAt(x - 1, y);
+//			}
+//			if(x < ActiveRows() - 1){
+//				OpenCellAt(x + 1, y);
+//			}
+//			if(x > 0 && y < ActiveLines() - 1){
+//				OpenCellAt(x - 1, y + 1);
+//			}
+//			if(y < ActiveLines() - 1){
+//				OpenCellAt(x, y + 1);
+//			}
+//			if(x < ActiveRows() - 1 && y < ActiveLines() - 1){
+//				OpenCellAt(x + 1, y + 1);
+//			}
+//		}
+//	}
+//}
 void OpenCellAt(int x, int y){
-	if(cells[y][x].state_ != open){
-		cells[y][x].state_ = open;
-		if(numOfOpendCells++ == 0){
-			SetField();
+	cells[y][x].state_ = open;
+	if(numOfOpendCells++ == 0){
+		SetField();
+	}
+	if(cells[y][x].numOfSurrounding_ == 0){
+		if(x > 0 && y > 0 && cells[y - 1][x - 1].state_ == close){
+			OpenCellAt(x - 1, y - 1);
 		}
-		if(cells[y][x].numOfSurrounding_ == 0){
-			if(x > 0 && y > 0){
-				OpenCellAt(x - 1, y - 1);
-			}
-			if(y > 0){
-				OpenCellAt(x, y - 1);
-			}
-			if(x < ActiveRows() - 1 && y > 0){
-				OpenCellAt(x + 1, y - 1);
-			}
-			if(x > 0){
-				OpenCellAt(x - 1, y);
-			}
-			if(x < ActiveRows() - 1){
-				OpenCellAt(x + 1, y);
-			}
-			if(x > 0 && y < ActiveLines() - 1){
-				OpenCellAt(x - 1, y + 1);
-			}
-			if(y < ActiveLines() - 1){
-				OpenCellAt(x, y + 1);
-			}
-			if(x < ActiveRows() - 1 && y < ActiveLines() - 1){
-				OpenCellAt(x + 1, y + 1);
-			}
+		if(y > 0 && cells[y - 1][x].state_ == close){
+			OpenCellAt(x, y - 1);
+		}
+		if(x < ActiveRows() - 1 && y > 0 && cells[y - 1][x + 1].state_ == close){
+			OpenCellAt(x + 1, y - 1);
+		}
+		if(x > 0 && cells[y][x - 1].state_ == close){
+			OpenCellAt(x - 1, y);
+		}
+		if(x < ActiveRows() - 1 && cells[y][x + 1].state_ == close){
+			OpenCellAt(x + 1, y);
+		}
+		if(x > 0 && y < ActiveLines() - 1 && cells[y + 1][x - 1].state_ == close){
+			OpenCellAt(x - 1, y + 1);
+		}
+		if(y < ActiveLines() - 1 && cells[y + 1][x].state_ == close){
+			OpenCellAt(x, y + 1);
+		}
+		if(x < ActiveRows() - 1 && y < ActiveLines() - 1 && cells[y + 1][x + 1].state_ == close){
+			OpenCellAt(x + 1, y + 1);
 		}
 	}
 }
