@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include<time.h>
 #define RECOMMENDED_BUFFER_ROWS 100
-#define RECOMMENDED_BUFFER_LINES 30
+#define RECOMMENDED_BUFFER_LINES 35
 #define NUM_OF_ROWS_AT_EASY 9
 #define NUM_OF_LINES_AT_EASY 9
 #define NUM_OF_MINES_AT_EASY 10
@@ -64,14 +64,14 @@ int main(){
 void DisplayCheck(){
 	char commnd;
 	int x, y;
-	for(y = 0; y < RECOMMENDED_BUFFER_LINES; y++){
+	for(y = 0; y < RECOMMENDED_BUFFER_LINES - 3; y++){
 		if(y == 0){
 			putchar('_');
 		}else{
 			putchar('|');
 		}
 		for(x = 0; x < RECOMMENDED_BUFFER_ROWS - 3; x++){
-			if(y == 0 || y == RECOMMENDED_BUFFER_LINES - 1){
+			if(y == 0 || y == RECOMMENDED_BUFFER_LINES -3 - 1){
 				putchar('_');
 			}else{
 				putchar(' ');
@@ -85,10 +85,10 @@ void DisplayCheck(){
 		putchar('\n');
 	}
 	do{
-		printf("この上に大きい長方形がきれいに表示されていますか？(Yes : y / No : n)：");
+		printf("この上に大きい長方形全体がきれいに表示されていますか？(Yes : y / No : n)：");
 		scanf(" %c", &commnd);
 		if(commnd == 'n'){
-			printf("表示できるバッファサイズを大きく設定して下さい。(推奨サイズ：幅%d、高さ%d)\n", RECOMMENDED_BUFFER_ROWS, RECOMMENDED_BUFFER_LINES);
+			printf("バッファとウィンドウのサイズを大きく設定して下さい。(推奨サイズ：幅%d以上、高さ%d以上)\n", RECOMMENDED_BUFFER_ROWS, RECOMMENDED_BUFFER_LINES);
 			do{
 				printf("変更出来ましたか？(Yes : y / No : n)：");
 				scanf(" %c", &commnd);
