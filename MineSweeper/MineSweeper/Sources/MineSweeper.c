@@ -21,7 +21,7 @@ typedef struct {
 	State state_;
 } Cell;
 
-int turn;
+time_t startTime;
 int isFinished = 0;
 int numOfFlag = 0;
 int numOfOpendCells = 0;
@@ -347,6 +347,7 @@ void OpenCellAt(int x, int y){
 void SetField(){
 	SetMines(NumOfMines());
 	SetNumOfSurrounding();
+	startTime = time(NULL);
 }
 
 void SetMines(int numOfMines){
@@ -409,4 +410,5 @@ void Win(){
 	isFinished = 1;
 	Draw();
 	puts("おめでとうございます。あなたの勝ちです。");
+	printf("今回の記録：%.1f秒\n", difftime(time(NULL), startTime));
 }
