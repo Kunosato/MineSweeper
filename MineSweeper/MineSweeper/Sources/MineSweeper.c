@@ -46,6 +46,7 @@ void SetMines(int numOfMines);
 // 0以上、引数未満の整数の乱数を返します。
 int RandomNext(int max);
 void SetNumOfSurrounding();
+void OpenAllCellsAround(int x, int y);
 void Lose();
 void Win();
 
@@ -241,11 +242,11 @@ void Input(){
 	switch(commnd){
 	case 'x' :
 		OpenCellAt(inputX - 1, inputY - 1);
-		if(cells[inputY - 1][inputX - 1].isMine_){
+		/*if(cells[inputY - 1][inputX - 1].isMine_){
 			Lose();
 		}else if(numOfOpendCells == GetNumOfLines() * GetNumOfRows() - GetNumOfMines()){
 			Win();
-		}
+		}*/
 		break;
 	case 'f' :
 		if(cells[inputY - 1][inputX - 1].state_ == flag){
@@ -277,40 +278,6 @@ int GetNumOfMines(){
 	}
 }
 
-//void OpenCellAt(int x, int y){
-//	if(cells[y][x].state_ != open){
-//		cells[y][x].state_ = open;
-//		if(numOfOpendCells++ == 0){
-//			SetField();
-//		}
-//		if(cells[y][x].numOfSurrounding_ == 0){
-//			if(x > 0 && y > 0){
-//				OpenCellAt(x - 1, y - 1);
-//			}
-//			if(y > 0){
-//				OpenCellAt(x, y - 1);
-//			}
-//			if(x < GetNumOfRows() - 1 && y > 0){
-//				OpenCellAt(x + 1, y - 1);
-//			}
-//			if(x > 0){
-//				OpenCellAt(x - 1, y);
-//			}
-//			if(x < GetNumOfRows() - 1){
-//				OpenCellAt(x + 1, y);
-//			}
-//			if(x > 0 && y < GetNumOfLines() - 1){
-//				OpenCellAt(x - 1, y + 1);
-//			}
-//			if(y < GetNumOfLines() - 1){
-//				OpenCellAt(x, y + 1);
-//			}
-//			if(x < GetNumOfRows() - 1 && y < GetNumOfLines() - 1){
-//				OpenCellAt(x + 1, y + 1);
-//			}
-//		}
-//	}
-//}
 void OpenCellAt(int x, int y){
 	cells[y][x].state_ = open;
 	if(numOfOpendCells++ == 0){
@@ -341,6 +308,11 @@ void OpenCellAt(int x, int y){
 		if(x < GetNumOfRows() - 1 && y < GetNumOfLines() - 1 && cells[y + 1][x + 1].state_ == close){
 			OpenCellAt(x + 1, y + 1);
 		}
+	}
+	if(cells[y][x].isMine_){
+		Lose();
+	}else if(numOfOpendCells == GetNumOfLines() * GetNumOfRows() - GetNumOfMines()){
+		Win();
 	}
 }
 
@@ -398,6 +370,15 @@ void SetNumOfSurrounding(){
 			}
 		}
 	}
+}
+
+void OpenAllCellsAround(int x, int y){
+	int tmp;
+	tmp = cells[y][x].numOfSurrounding_;
+	cells[y][x].numOfSurrounding_ = 0;
+	numOfOpendCells--;
+	OpenCellAt(x, y);
+	cells[y][x].numOfSurrounding_ = tmp;
 }
 
 void Lose(){
