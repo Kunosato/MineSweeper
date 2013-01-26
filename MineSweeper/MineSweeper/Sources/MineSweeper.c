@@ -24,6 +24,7 @@ typedef struct {
 
 GameState gameState;
 time_t startTime;
+time_t winTime;
 int numOfFlag;
 int numOfOpendCells;
 int isReplay;
@@ -56,6 +57,8 @@ void OpenAllCellsAround(int x, int y);
 void Lose();
 void CloseField();
 void Win();
+// 前回の記録が書かれたファイルを書き換えます。
+void UpdateFile(double difftime);
 
 int main(){
 	srand((unsigned int)time(NULL));
@@ -477,10 +480,12 @@ void CloseField(){
 
 void Win(){
 	int input;
+	winTime = time(NULL);
 	Draw();
 	puts("おめでとうございます。あなたの勝ちです。");
 	if(!isReplay){
-		printf("今回の記録：%.1f秒\n", difftime(time(NULL), startTime));
+		UpdateFile(difftime(winTime, startTime));
+		printf("今回の記録：%.1f秒\n", difftime(winTime, startTime));
 	}
 	do{
 		printf("どうしますか？(新しく始める：1、同じ配置でもう一度始める：2、やめる：3)：");
@@ -503,4 +508,43 @@ void Win(){
 	case 3 :
 		break;
 	}
+}
+
+void UpdateFile(double difftime){
+	FILE *fp;
+	int c;
+
+	switch(level){
+	case easy :
+		fp = fopen("data0.txt", "r");
+		break;
+	case normal :
+		fp = fopen("data1.txt", "r");
+		break;
+	case hard :
+		fp = fopen("data2.txt", "r");
+		break;
+	}
+	if(fp != NULL){
+		printf("前回の記録：");
+		while((c = getc(fp)) != EOF){
+			putchar(c);
+		}
+		puts("秒");
+		fclose(fp);
+	}
+
+	switch(level){
+	case easy :
+		fp = fopen("data0.txt", "w");
+		break;
+	case normal :
+		fp = fopen("data1.txt", "w");
+		break;
+	case hard :
+		fp = fopen("data2.txt", "w");
+		break;
+	}
+	fprintf(fp, "%.1f", difftime);
+	fclose(fp);
 }
