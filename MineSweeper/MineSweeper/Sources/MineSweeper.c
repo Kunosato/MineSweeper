@@ -13,6 +13,7 @@
 #define NUM_OF_LINES_AT_HARD 16
 #define NUM_OF_MINES_AT_HARD 99
 
+typedef enum {playing, win, lose} GameState;
 typedef enum {easy, normal, hard} Level;
 typedef enum {close, flag, question, open} State;
 typedef struct {
@@ -21,8 +22,8 @@ typedef struct {
 	State state_;
 } Cell;
 
+GameState gameState = playing;
 time_t startTime;
-int isFinished = 0;
 int numOfFlag = 0;
 int numOfOpendCells = 0;
 Level level;
@@ -46,6 +47,9 @@ void SetMines(int numOfMines);
 // 0以上、引数未満の整数の乱数を返します。
 int RandomNext(int max);
 void SetNumOfSurrounding();
+// 引数のインデックスを持つセルの周囲の地雷の数を返します。
+int GetNumOfSurroundingAround(int x, int y);
+// 引数のインデックスを持つすでに開いているセルの周囲のすべての旗や?が付いていないセルを開きます。
 void OpenAllCellsAround(int x, int y);
 void Lose();
 void Win();
@@ -55,9 +59,15 @@ int main(){
 	DisplayCheck();
 	level = SelectLevel();
 	InitializeField();
-	while(!isFinished){
+	while(gameState == playing){
 		Draw();
 		Input();
+	}
+	Draw();
+	if(gameState == lose){
+		Lose();
+	}else if(gameState == win){
+		Win();
 	}
 	return 0;
 }
@@ -181,7 +191,7 @@ int GetNumOfLines(){
 
 char *GetString(Cell cell){
 	if(cell.state_ == close){
-		if(isFinished && cell.isMine_){
+		if(gameState == lose && cell.isMine_){
 			return "×";
 		}else{
 			return "■";
@@ -217,36 +227,64 @@ void Input(){
 	puts("入力欄：x 3 5");
 	puts("例2）左から7マス目、上から1マス目に旗を立てる(又は取り除く)場合");
 	puts("入力欄：f 7 1");
-	puts("例3）左から2マス目、上から10マス目に？マークをつける(又は取り除く)場合");
-	puts("入力欄：q 2 10");
-	puts("例4）ゲームを終了したい場合");
-	puts("入力欄：e 1 1");
+	puts("例3）左から2マス目、上から9マス目に？マークをつける(又は取り除く)場合");
+	puts("入力欄：q 2 9");
+	puts("例4）すでに開いている左から8マス目、上から2マス目の周囲の旗や？以外をすべて開ける場合");
+	puts("入力欄：a 8 2");
+	puts("例5）ゲームを終了したい場合");
+	puts("入力欄：e");
 	putchar('\n');
+	//do{
+	//	printf("入力欄：");
+	//	scanf(" %c %d %d", &commnd, &inputX, &inputY);
+	//	if(inputX < 1 || inputX > GetNumOfRows() || inputY < 1 || inputY > GetNumOfLines()){
+	//		puts("対象が範囲外です。");
+	//	}else if(commnd != 'x' && commnd != 'f' && commnd != 'q' && commnd != 'a' && commnd != 'e'){
+	//		puts("コマンドが不正です。");
+	//	}else if(cells[inputY - 1][inputX - 1].state_ == open){
+	//		puts("すでに開いています。");
+	//	}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == flag){
+	//		puts("旗が立っています。");
+	//	}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == question){
+	//		puts("？が付いています。");
+	//	}else{
+	//		isCorrectCommand = 1;
+	//	}
+	//}while(!isCorrectCommand);
 	do{
 		printf("入力欄：");
-		scanf(" %c %d %d", &commnd, &inputX, &inputY);
-		if(inputX < 1 || inputX > GetNumOfRows() || inputY < 1 || inputY > GetNumOfLines()){
-			puts("対象が範囲外です。");
-		}else if(commnd != 'x' && commnd != 'f' && commnd != 'q' && commnd != 'e'){
+		scanf(" %c", &commnd);
+		if(commnd == 'e'){
+			exit(0);
+		}
+		scanf(" %d %d", &inputX, &inputY);
+		if(commnd != 'x' && commnd != 'f' && commnd != 'q' && commnd != 'a'){
 			puts("コマンドが不正です。");
-		}else if(cells[inputY - 1][inputX - 1].state_ == open){
-			puts("すでに開いています。");
-		}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == flag){
-			puts("旗が立っています。");
-		}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == question){
-			puts("？が付いています。");
+		}else if(inputX < 1 || inputX > GetNumOfRows() || inputY < 1 || inputY > GetNumOfLines()){
+			puts("対象が範囲外です。");
 		}else{
-			isCorrectCommand = 1;
+			if(commnd == 'a'){
+				if(cells[inputY - 1][inputX - 1].state_ != open){
+					puts("開いていません。");
+				}else{
+					isCorrectCommand = 1;
+				}
+			}else{
+				if(cells[inputY - 1][inputX - 1].state_ == open){
+					puts("すでに開いています。");
+				}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == flag){
+					puts("旗が立っています。");
+				}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == question){
+					puts("？が付いています。");
+				}else{
+					isCorrectCommand = 1;
+				}
+			}
 		}
 	}while(!isCorrectCommand);
 	switch(commnd){
 	case 'x' :
 		OpenCellAt(inputX - 1, inputY - 1);
-		/*if(cells[inputY - 1][inputX - 1].isMine_){
-			Lose();
-		}else if(numOfOpendCells == GetNumOfLines() * GetNumOfRows() - GetNumOfMines()){
-			Win();
-		}*/
 		break;
 	case 'f' :
 		if(cells[inputY - 1][inputX - 1].state_ == flag){
@@ -264,9 +302,12 @@ void Input(){
 			cells[inputY - 1][inputX - 1].state_ = question;
 		}
 		break;
-	case 'e' :
-		exit(0);
+	case 'a' :
+		OpenAllCellsAround(inputX - 1, inputY - 1);
 		break;
+	//case 'e' :
+	//	exit(0);
+	//	break;
 	}
 }
 
@@ -279,9 +320,12 @@ int GetNumOfMines(){
 }
 
 void OpenCellAt(int x, int y){
-	cells[y][x].state_ = open;
-	if(numOfOpendCells++ == 0){
-		SetField();
+	int isOpened = cells[y][x].state_ == open ? 1 : 0;
+	if(!isOpened){
+		cells[y][x].state_ = open;
+		if(numOfOpendCells++ == 0){
+			SetField();
+		}
 	}
 	if(cells[y][x].numOfSurrounding_ == 0 && !cells[y][x].isMine_){
 		if(x > 0 && y > 0 && cells[y - 1][x - 1].state_ == close){
@@ -309,10 +353,12 @@ void OpenCellAt(int x, int y){
 			OpenCellAt(x + 1, y + 1);
 		}
 	}
-	if(cells[y][x].isMine_){
-		Lose();
+	if(isOpened){
+		cells[y][x].numOfSurrounding_ = GetNumOfSurroundingAround(x, y);
+	}else if(cells[y][x].isMine_){
+		gameState = lose;
 	}else if(numOfOpendCells == GetNumOfLines() * GetNumOfRows() - GetNumOfMines()){
-		Win();
+		gameState = win;
 	}
 }
 
@@ -343,53 +389,51 @@ void SetNumOfSurrounding(){
 	for(y = 0; y < GetNumOfLines(); y++){
 		for(x = 0; x < GetNumOfRows(); x++){
 			if(!cells[y][x].isMine_){
-				if(x > 0 && y > 0 && cells[y - 1][x - 1].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
-				if(y > 0 && cells[y - 1][x].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
-				if(x < GetNumOfRows() - 1 && y > 0 && cells[y - 1][x + 1].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
-				if(x > 0 && cells[y][x - 1].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
-				if(x < GetNumOfRows() - 1 && cells[y][x + 1].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
-				if(x > 0 && y < GetNumOfLines() - 1 && cells[y + 1][x - 1].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
-				if(y < GetNumOfLines() - 1 && cells[y + 1][x].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
-				if(x < GetNumOfRows() - 1 && y < GetNumOfLines() - 1 && cells[y + 1][x + 1].isMine_){
-					cells[y][x].numOfSurrounding_++;
-				}
+				cells[y][x].numOfSurrounding_ = GetNumOfSurroundingAround(x, y);
 			}
 		}
 	}
 }
 
+int GetNumOfSurroundingAround(int x, int y){
+	int numOfSurrounding = 0;
+	if(x > 0 && y > 0 && cells[y - 1][x - 1].isMine_){
+		numOfSurrounding++;
+	}
+	if(y > 0 && cells[y - 1][x].isMine_){
+		numOfSurrounding++;
+	}
+	if(x < GetNumOfRows() - 1 && y > 0 && cells[y - 1][x + 1].isMine_){
+		numOfSurrounding++;
+	}
+	if(x > 0 && cells[y][x - 1].isMine_){
+		numOfSurrounding++;
+	}
+	if(x < GetNumOfRows() - 1 && cells[y][x + 1].isMine_){
+		numOfSurrounding++;
+	}
+	if(x > 0 && y < GetNumOfLines() - 1 && cells[y + 1][x - 1].isMine_){
+		numOfSurrounding++;
+	}
+	if(y < GetNumOfLines() - 1 && cells[y + 1][x].isMine_){
+		numOfSurrounding++;
+	}
+	if(x < GetNumOfRows() - 1 && y < GetNumOfLines() - 1 && cells[y + 1][x + 1].isMine_){
+		numOfSurrounding++;
+	}
+	return numOfSurrounding;
+}
+
 void OpenAllCellsAround(int x, int y){
-	int tmp;
-	tmp = cells[y][x].numOfSurrounding_;
 	cells[y][x].numOfSurrounding_ = 0;
-	numOfOpendCells--;
 	OpenCellAt(x, y);
-	cells[y][x].numOfSurrounding_ = tmp;
 }
 
 void Lose(){
-	isFinished = 1;
-	Draw();
 	puts("地雷を踏んでしまいました。あなたの負けです。");
 }
 
 void Win(){
-	isFinished = 1;
-	Draw();
 	puts("おめでとうございます。あなたの勝ちです。");
 	printf("今回の記録：%.1f秒\n", difftime(time(NULL), startTime));
 }
