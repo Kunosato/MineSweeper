@@ -22,16 +22,18 @@ typedef struct {
 	State state_;
 } Cell;
 
-GameState gameState = playing;
+GameState gameState;
 time_t startTime;
-int numOfFlag = 0;
-int numOfOpendCells = 0;
+int numOfFlag;
+int numOfOpendCells;
+int isReplay;
 Level level;
 Cell cells[NUM_OF_LINES_AT_HARD][NUM_OF_ROWS_AT_HARD];
 
 void DisplayCheck();
 Level SelectLevel();
-void InitializeField();
+void Initialize();
+void CleanField();
 void Draw();
 void CleanDisplay();
 int GetNumOfRows();
@@ -52,22 +54,23 @@ int GetNumOfSurroundingAround(int x, int y);
 // 引数のインデックスを持つすでに開いているセルの周囲のすべての旗や?が付いていないセルを開きます。
 void OpenAllCellsAround(int x, int y);
 void Lose();
+void CloseField();
 void Win();
 
 int main(){
 	srand((unsigned int)time(NULL));
 	DisplayCheck();
 	level = SelectLevel();
-	InitializeField();
+	Initialize();
+	CleanField();
 	while(gameState == playing){
 		Draw();
 		Input();
-	}
-	Draw();
-	if(gameState == lose){
-		Lose();
-	}else if(gameState == win){
-		Win();
+		if(gameState == lose){
+			Lose();
+		}else if(gameState == win){
+			Win();
+		}
 	}
 	return 0;
 }
@@ -133,7 +136,14 @@ Level SelectLevel(){
 	}
 }
 
-void InitializeField(){
+void Initialize(){
+	gameState = playing;
+	numOfFlag = 0;
+	numOfOpendCells = 0;
+	isReplay = 0;
+}
+
+void CleanField(){
 	int x, y;
 	for(y = 0; y < NUM_OF_LINES_AT_HARD; y++){
 		for(x = 0; x < NUM_OF_ROWS_AT_HARD; x++){
@@ -323,7 +333,7 @@ void OpenCellAt(int x, int y){
 	int isOpened = cells[y][x].state_ == open ? 1 : 0;
 	if(!isOpened){
 		cells[y][x].state_ = open;
-		if(numOfOpendCells++ == 0){
+		if(numOfOpendCells++ == 0 && !isReplay){
 			SetField();
 		}
 	}
@@ -430,10 +440,67 @@ void OpenAllCellsAround(int x, int y){
 }
 
 void Lose(){
+	int input;
+	Draw();
 	puts("地雷を踏んでしまいました。あなたの負けです。");
+	do{
+		printf("どうしますか？(新しく始める：1、同じ配置でもう一度始める：2、やめる：3)：");
+		scanf(" %d", &input);
+		if(input < 1 || input > 3){
+			puts("入力値が不正です。");
+		}
+	}while(input < 1 || input > 3);
+	switch(input){
+	case 1 :
+		level = SelectLevel();
+		Initialize();
+		CleanField();
+		break;
+	case 2 :
+		Initialize();
+		CloseField();
+		isReplay = 1;
+		break;
+	case 3 :
+		break;
+	}
+}
+
+void CloseField(){
+	int x, y;
+	for(y = 0; y < NUM_OF_LINES_AT_HARD; y++){
+		for(x = 0; x < NUM_OF_ROWS_AT_HARD; x++){
+			cells[y][x].state_ = close;
+		}
+	}
 }
 
 void Win(){
+	int input;
+	Draw();
 	puts("おめでとうございます。あなたの勝ちです。");
-	printf("今回の記録：%.1f秒\n", difftime(time(NULL), startTime));
+	if(!isReplay){
+		printf("今回の記録：%.1f秒\n", difftime(time(NULL), startTime));
+	}
+	do{
+		printf("どうしますか？(新しく始める：1、同じ配置でもう一度始める：2、やめる：3)：");
+		scanf(" %d", &input);
+		if(input < 1 || input > 3){
+			puts("入力値が不正です。");
+		}
+	}while(input < 1 || input > 3);
+	switch(input){
+	case 1 :
+		level = SelectLevel();
+		Initialize();
+		CleanField();
+		break;
+	case 2 :
+		Initialize();
+		CloseField();
+		isReplay = 1;
+		break;
+	case 3 :
+		break;
+	}
 }
