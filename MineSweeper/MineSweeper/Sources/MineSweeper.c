@@ -12,35 +12,37 @@
 #define NUM_OF_ROWS_AT_HARD 30
 #define NUM_OF_LINES_AT_HARD 16
 #define NUM_OF_MINES_AT_HARD 99
+#define NUM_OF_MESSEAGE_LINES_AT_INPUT 14
 
-typedef enum {playing, win, lose} GameState;
-typedef enum {easy, normal, hard} Level;
-typedef enum {close, flag, question, open} State;
-typedef struct {
+enum GameState { standby, playing, win, lose };
+enum Level { easy, normal, hard };
+enum State { close, flag, question, open };
+struct Cell {
 	int isMine_;
 	int numOfSurrounding_;
-	State state_;
-} Cell;
+	enum State state_;
+};
 
-GameState gameState;
+enum GameState gameState;
 time_t startTime;
 time_t winTime;
 int numOfFlag;
 int numOfOpendCells;
 int isReplay;
-Level level;
-Cell cells[NUM_OF_LINES_AT_HARD][NUM_OF_ROWS_AT_HARD];
+enum Level level;
+struct Cell cells[NUM_OF_LINES_AT_HARD][NUM_OF_ROWS_AT_HARD];
 
 void DisplayCheck();
-Level SelectLevel();
+enum Level SelectLevel();
 void Initialize();
 void CleanField();
 void Draw();
-void CleanDisplay();
+// 引数の数だけ改行します。
+void CleanDisplay(int numOfLine);
 int GetNumOfRows();
 int GetNumOfLines();
 // 引数のセルに関して表示すべき文字列(正確にはポインタ)を返します。
-char *GetString(Cell cell);
+char *GetString(struct Cell cell);
 void Input();
 int GetNumOfMines();
 // 引数のインデックスを持つセルを開け、値が0の場合、再帰的に周囲も開きます。
@@ -55,6 +57,8 @@ int GetNumOfSurroundingAround(int x, int y);
 // 引数のインデックスを持つすでに開いているセルの周囲のすべての旗や?が付いていないセルを開きます。
 void OpenAllCellsAround(int x, int y);
 void Lose();
+void NewGame();
+void Replay();
 void CloseField();
 void Win();
 // 前回の記録が書かれたファイルを書き換えます。
@@ -66,7 +70,7 @@ int main(){
 	level = SelectLevel();
 	Initialize();
 	CleanField();
-	while(gameState == playing){
+	while(gameState == standby || gameState == playing){
 		Draw();
 		Input();
 		if(gameState == lose){
@@ -123,7 +127,7 @@ void DisplayCheck(){
 	}while(commnd != 'y' && commnd != 'n');
 }
 
-Level SelectLevel(){
+enum Level SelectLevel(){
 	int l;
 	do{
 		printf("難易度を選んでください(初級：1 中級：2 上級：3)：");
@@ -140,7 +144,7 @@ Level SelectLevel(){
 }
 
 void Initialize(){
-	gameState = playing;
+	gameState = standby;
 	numOfFlag = 0;
 	numOfOpendCells = 0;
 	isReplay = 0;
@@ -159,7 +163,7 @@ void CleanField(){
 
 void Draw(){
 	int x, y;
-	CleanDisplay();
+	CleanDisplay(RECOMMENDED_BUFFER_LINES);
 	printf("  |");
 	for(x = 0; x < GetNumOfRows(); x++){
 		printf("%3d", x + 1);
@@ -179,9 +183,9 @@ void Draw(){
 	}
 }
 
-void CleanDisplay(){
+void CleanDisplay(int numOfLine){
 	int i;
-	for(i = 0; i < RECOMMENDED_BUFFER_LINES; i++){
+	for(i = 0; i < numOfLine; i++){
 		putchar('\n');
 	}
 }
@@ -202,7 +206,7 @@ int GetNumOfLines(){
 	}
 }
 
-char *GetString(Cell cell){
+char *GetString(struct Cell cell){
 	if(cell.state_ == close){
 		if(gameState == lose && cell.isMine_){
 			return "×";
@@ -234,7 +238,11 @@ void Input(){
 	char commnd;
 	int inputX, inputY;
 	int isCorrectCommand = 0;
-	printf("地雷：残り%d個\n", GetNumOfMines() - numOfFlag);
+	printf("地雷：残り%d個", GetNumOfMines() - numOfFlag);
+	if(gameState == playing && !isReplay){
+		printf(" ﾀｲﾑ：%.f秒", difftime(time(NULL), startTime));
+	}
+	putchar('\n');
 	puts("以下の例のように半角英数を半角スペース(又は改行)で区切って入力してください。");
 	puts("例1）左から3マス目、上から5マス目を開ける場合");
 	puts("入力欄：x 3 5");
@@ -247,23 +255,6 @@ void Input(){
 	puts("例5）ゲームを終了したい場合");
 	puts("入力欄：e");
 	putchar('\n');
-	//do{
-	//	printf("入力欄：");
-	//	scanf(" %c %d %d", &commnd, &inputX, &inputY);
-	//	if(inputX < 1 || inputX > GetNumOfRows() || inputY < 1 || inputY > GetNumOfLines()){
-	//		puts("対象が範囲外です。");
-	//	}else if(commnd != 'x' && commnd != 'f' && commnd != 'q' && commnd != 'a' && commnd != 'e'){
-	//		puts("コマンドが不正です。");
-	//	}else if(cells[inputY - 1][inputX - 1].state_ == open){
-	//		puts("すでに開いています。");
-	//	}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == flag){
-	//		puts("旗が立っています。");
-	//	}else if(commnd == 'x' && cells[inputY - 1][inputX - 1].state_ == question){
-	//		puts("？が付いています。");
-	//	}else{
-	//		isCorrectCommand = 1;
-	//	}
-	//}while(!isCorrectCommand);
 	do{
 		printf("入力欄：");
 		scanf(" %c", &commnd);
@@ -318,9 +309,6 @@ void Input(){
 	case 'a' :
 		OpenAllCellsAround(inputX - 1, inputY - 1);
 		break;
-	//case 'e' :
-	//	exit(0);
-	//	break;
 	}
 }
 
@@ -337,7 +325,11 @@ void OpenCellAt(int x, int y){
 	if(!isOpened){
 		cells[y][x].state_ = open;
 		if(numOfOpendCells++ == 0 && !isReplay){
-			SetField();
+			if(isReplay){
+				gameState = playing;
+			}else{
+				SetField();
+			}
 		}
 	}
 	if(cells[y][x].numOfSurrounding_ == 0 && !cells[y][x].isMine_){
@@ -370,7 +362,7 @@ void OpenCellAt(int x, int y){
 		cells[y][x].numOfSurrounding_ = GetNumOfSurroundingAround(x, y);
 	}else if(cells[y][x].isMine_){
 		gameState = lose;
-	}else if(numOfOpendCells == GetNumOfLines() * GetNumOfRows() - GetNumOfMines()){
+	}else if(numOfOpendCells == GetNumOfLines() * GetNumOfRows() - GetNumOfMines() && gameState != lose){
 		gameState = win;
 	}
 }
@@ -378,6 +370,7 @@ void OpenCellAt(int x, int y){
 void SetField(){
 	SetMines(GetNumOfMines());
 	SetNumOfSurrounding();
+	gameState = playing;
 	startTime = time(NULL);
 }
 
@@ -445,6 +438,7 @@ void OpenAllCellsAround(int x, int y){
 void Lose(){
 	int input;
 	Draw();
+	CleanDisplay(NUM_OF_MESSEAGE_LINES_AT_INPUT - 2);
 	puts("地雷を踏んでしまいました。あなたの負けです。");
 	do{
 		printf("どうしますか？(新しく始める：1、同じ配置でもう一度始める：2、やめる：3)：");
@@ -455,18 +449,26 @@ void Lose(){
 	}while(input < 1 || input > 3);
 	switch(input){
 	case 1 :
-		level = SelectLevel();
-		Initialize();
-		CleanField();
+		NewGame();
 		break;
 	case 2 :
-		Initialize();
-		CloseField();
-		isReplay = 1;
+		Replay();
 		break;
 	case 3 :
 		break;
 	}
+}
+
+void NewGame(){
+	level = SelectLevel();
+	Initialize();
+	CleanField();
+}
+
+void Replay(){
+	Initialize();
+	CloseField();
+	isReplay = 1;
 }
 
 void CloseField(){
@@ -482,10 +484,11 @@ void Win(){
 	int input;
 	winTime = time(NULL);
 	Draw();
+	CleanDisplay(NUM_OF_MESSEAGE_LINES_AT_INPUT - (isReplay ? 2 : 4));
 	puts("おめでとうございます。あなたの勝ちです。");
 	if(!isReplay){
 		UpdateFile(difftime(winTime, startTime));
-		printf("今回の記録：%.1f秒\n", difftime(winTime, startTime));
+		printf("今回の記録：%.f秒\n", difftime(winTime, startTime));
 	}
 	do{
 		printf("どうしますか？(新しく始める：1、同じ配置でもう一度始める：2、やめる：3)：");
@@ -496,14 +499,10 @@ void Win(){
 	}while(input < 1 || input > 3);
 	switch(input){
 	case 1 :
-		level = SelectLevel();
-		Initialize();
-		CleanField();
+		NewGame();
 		break;
 	case 2 :
-		Initialize();
-		CloseField();
-		isReplay = 1;
+		Replay();
 		break;
 	case 3 :
 		break;
@@ -545,6 +544,6 @@ void UpdateFile(double difftime){
 		fp = fopen("data2.txt", "w");
 		break;
 	}
-	fprintf(fp, "%.1f", difftime);
+	fprintf(fp, "%.f", difftime);
 	fclose(fp);
 }
